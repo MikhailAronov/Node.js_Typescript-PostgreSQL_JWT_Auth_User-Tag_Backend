@@ -1,0 +1,823 @@
+{
+    "swagger": "2.0",
+    "info"    : {
+        "version"     : "1.0",
+        "title"       : "Typescript/PostgreSQL JWT User-Tags API",
+        "description" : "Web application with user registration, JWT authentification, tag functionality",
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+    },
+    "basepath" : "/",
+    "tags"     : [
+        {
+            "name"        : "users",
+            "discription" : "API for users part"
+        },
+        {
+            "name"        : "tags",
+            "discription" : "API for tags part"
+        }
+    ],
+    "produces" : ["application/json"],
+    "paths"    : {
+        "/newAccessTokenByRefresh" : {
+            "get" : {
+                "tags"      : ["users"],
+                "summary"   : "Provide new access token if refresh token is valid and produce new refresh token generated with new secret",
+                "produces"  : ["application/json"],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema"      : {
+                            "type" : "object",
+                            "properties" : {
+                                "accessToken" : {
+                                    "type" : "string"
+                                },
+                                "refreshToken" : {
+                                    "type" : "string"
+                                }
+                            }
+                        }
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/signin" : {
+            "post" : {
+                "tags"      : ["users"],
+                "summary"   : "Registration for new users",
+                "produces"  : ["application/json"],
+                "consumes" : ["application/json"],
+                "parameters" : [
+                    {
+                        "in" : "body",
+                        "description" : "User data for registration",
+                        "required"    : "true",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "email" : {
+                                    "type"    : "string",
+                                    "example" : "email@gmail.com"
+                                },
+                                "password" : {
+                                    "type"    : "string",
+                                    "example" : "Qwerty123"
+                                },
+                                "nickname" : {
+                                    "type" : "string",
+                                    "example" : "XxX_Dark_Stalker_XxX"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "accessToken"  : {
+                                    "type" : "string"
+                                },
+                                "refreshToken" : {
+                                    "type" : "string"
+                                },
+                                "expose" : {
+                                    "type" : "integer",
+                                    "description" : "expiration time of access token in seconds",
+                                    "example" : "0"
+                                }
+                            }
+                        }
+                    },
+                    "400" : {
+                        "description" : "Incorrect input data or missed user information"
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "422" : {
+                        "description" : "Inputed data does not match the criteria (details in server response)"
+                    },
+                    "500" : {
+                        "description" :"Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/login" : {
+            "post" : {
+                "tags"      : ["users"],
+                "summary"   : "User authentication and receiving new pair of access and refresh tokens",
+                "produces"  : ["application/json"],
+                "parameters" : [
+                    {
+                        "in" : "body",
+                        "description" : "User data for registration",
+                        "required"    : "true",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "email" : {
+                                    "type"    : "string",
+                                    "example" : "email@gmail.com"
+                                },
+                                "password" : {
+                                    "type"    : "string",
+                                    "example" : "Qwerty123"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "accessToken"  : {
+                                    "type" : "string"
+                                },
+                                "refreshToken" : {
+                                    "type" : "string" 
+                                },
+                                "expose" : {
+                                    "type" : "integer",
+                                    "description" : "expiration time of access token in seconds"
+                                }
+                            }
+                        }
+                    },
+                    "400" : {
+                        "description" : "Incorrect input data or missed user information"
+                    },
+                    "422" : {
+                        "description" : "Inputed data does not match the criteria (details in server response)"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/logout" : {
+            "post" : {
+                "tags"      : ["users"],
+                "summary"   : "Send signal to delete access and refresh tokens",
+                "produces"  : ["application/json"],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "removeUserTokens" : {
+                                    "type" : "boolean"
+                                }
+                            }
+                        }
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/user" : {
+            "get"    : {
+                "tags"      : ["users"],
+                "summary"   : "Returns to authorized user his nickname, email and all his tags",
+                "produces"  : ["application/json"],
+                "parameters" : [
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "email"    : {
+                                    "type" : "string"
+                                },
+                                "nickname" : {
+                                    "type" : "string"
+                                },
+                                "tags"     : {
+                                    "type"        : "array",
+                                    "description" : "Array of all tags, assigned to user",
+                                    "items"       :  {
+                                        "type"       : "object",
+                                        "properties" : {
+                                            "id" : {
+                                                "type" : "string"
+                                            },
+                                            "name" : {
+                                                "type" : "string"
+                                            },
+                                            "sortOrder" : {
+                                                "type" : "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    } 
+                }
+            },
+            "put"    : {
+                "tags"      : ["users"],
+                "summary"   : "User can change his nickname/email/password",
+                "produces"   : ["application/json"],
+                "parameters" : [
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    },
+                    {
+                        "in" : "body",
+                        "description" : "User data to update",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "email" : {
+                                    "type"    : "string",
+                                    "example" : "email@gmail.com"
+                                },
+                                "password" : {
+                                    "type"    : "string",
+                                    "example" : "Qwerty123"
+                                },
+                                "nickname" : {
+                                    "type" : "string",
+                                    "example" : "XxX_Dark_Stalker_XxX"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK (All response fields is optional)",
+                        "schema"      : {
+                            "type" : "object",
+                            "properties" : {
+                                "nickname" : {
+                                    "type" : "string"
+                                },
+                                "email" : {
+                                    "type" : "string"
+                                }
+                            }
+                        }
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "422" : {
+                        "description" : "Inputed data does not match the criteria (details in server response)"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            },
+            "delete" : {
+                "tags"      : ["users"],
+                "summary"   : "Deletes user and attached to him tags",
+                "parameters" : [
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK"
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/tag" : {
+            "post" : {
+                "tags" : ["tags"],
+                "summary" : "Creates a tag",
+                "parameters" : [
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    },
+                    {
+                        "in" : "body",
+                        "description" : "User data for registration",
+                        "required"    : "true",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "name" : {
+                                    "type" : "string"
+                                },
+                                "sortOrder" : {
+                                    "type" : "number"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK"
+                    },
+
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "422" : {
+                        "description" : "Inputed data does not match the criteria (details in server response)"
+                    },
+                    "500" : {
+                        "description" :"Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/tag?sortByOrder&sortByName&page=10&pageSize=10" : {
+            "get"  : {
+                "tags" : ["tags"],
+                "summary" : "Provides bunch of tags. Url query parameters customize query",
+                "produces" : ["application/json"],
+                "parameters" : [
+                    {
+                        "in" : "query",
+                        "name" : "sortByOrder",
+                        "description" : "If included in query, tags will be sorted by id"
+                    },
+                    {
+                        "in" : "query",
+                        "name" : "sortByName",
+                        "description" : "If included in query, tags will be sorted by name"
+                    },
+                    {
+                        "in" : "query",
+                        "name" : "page",
+                        "description" : "Defines the number of page to be shown"
+                    },
+                    {
+                        "in" : "query",
+                        "name" : "pageSize",
+                        "description" : "Defines the number of tags in one page"
+                    },
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "data" : {
+                                    "type"  : "array",
+                                    "items" : {
+                                        "type" : "object",
+                                        "properties" : {
+                                            "creator" : {
+                                                "type"       : "object",
+                                                "properties" : {
+                                                    "nickname" : {
+                                                        "type" : "string"
+                                                    },
+                                                    "uid" : {
+                                                        "type" : "string"
+                                                    }
+                                                }
+                                            },
+                                            "name" : {
+                                                "type" : "string"
+                                            },
+                                            "sortOrder" : {
+                                                "type" : "integer"
+                                            }
+                                        }
+                                    }
+                                },
+                                "meta" : {
+                                    "type" : "object",
+                                    "properties" : {
+                                        "page" : {
+                                            "type" : "integer"
+                                        },
+                                        "pageSize" : {
+                                            "type" : "integer"
+                                        },
+                                        "quantity" : {
+                                            "type" : "integer",
+                                            "description" : "Amount of all tags"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "500" : {
+                        "description" :"Some internal unexpected error on server"
+                    }
+                }
+            }
+        }, 
+        "/tag/{id}" : {
+            "get"    : {
+                "tags"      : ["tags"],
+                "summary"   : "Provides one exact tag with certain id",
+                "produces"  : ["application/json"],
+                "parameters" : [
+                    {
+                        "in" : "path",
+                        "name" : "id",
+                        "description" : "Id of the tag"
+                    },
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema"      : {
+                            "type" : "object",
+                            "properties" : {
+                                "creator" : {
+                                    "type"       : "object",
+                                    "properties" : {
+                                        "nickname" : {
+                                            "type" : "string"
+                                        },
+                                        "uid" : {
+                                            "type" : "string"
+                                        }
+                                    }
+                                },
+                                "name" : {
+                                    "type" : "string"
+                                },
+                                "sortOrder" : {
+                                    "type" : "string"
+                                }
+                            }
+                        }
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            },
+            "put"   : {
+                "tags"      : ["tags"],
+                "summary"   : "Update tag with certain id",
+                "produces"  : ["application/json"],
+                "parameters" : [
+                    {
+                        "in" : "path",
+                        "name" : "id",
+                        "description" : "Id of the tag"
+                    },
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    },
+                    {
+                        "in" : "body",
+                        "description" : "User data for registration",
+                        "required"    : "true",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "name" : {
+                                    "type" : "string"
+                                },
+                                "sortOrder" : {
+                                    "type" : "number"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "creator" : {
+                                    "type"       : "object",
+                                    "properties" : {
+                                        "nickname" : {
+                                            "type" : "string"
+                                        },
+                                        "uid" : {
+                                            "type" : "string"
+                                        }
+                                    }
+                                },
+                                "name" : {
+                                    "type" : "string"
+                                },
+                                "sortOrder" : {
+                                    "type" : "integer"
+                                }
+                            }
+                        }
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "403" : {
+                        "description" : "Forbidden action: user is not the tag's creator"
+                    },
+                    "422" : {
+                        "description" : "Inputed data does not match the criteria (details in server response)"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            },
+            "delete" : {
+                "tags" : ["tags"],
+                "summary" : "Delete tag with exact id",
+                "parameters" : [
+                    {
+                        "in" : "path",
+                        "name" : "id",
+                        "description" : "Id of the tag"
+                    },
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK"
+                    },
+                    "422" : {
+                        "description" : "Inputed data does not match the criteria (details in server response)"
+                    },
+                    "500" : {
+                        "description" : "OK"
+                    }
+                }
+            }
+        },
+        "/user/tag" : {
+            "post" : {
+                "tags"      : ["tags"],
+                "summary"   : "Adds a tag to a user's tag group",
+                "produces"  : ["application/json"],
+                "parameters" : [
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    },
+                    {
+                        "in" : "body",
+                        "description" : "User data for registration",
+                        "required"    : "true",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "tags" : {
+                                    "type" : "array",
+                                    "items" : {
+                                        "type" : "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "tags" : {
+                                    "type"  : "array",
+                                    "items" : {
+                                        "type" : "object",
+                                        "properties" : {
+                                            "id" : {
+                                                "type" : "string"
+                                            },
+                                            "name" : {
+                                                "type" : "string"
+                                            },
+                                            "sortOrder" : {
+                                                "type" : "number"
+                                            }
+                                        }                                    
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400" : {
+                        "description" : "Incorrect input data or missed user information"
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/user/tag/{id}" : {
+            "delete" : {
+                "tags" : ["tags"],
+                "summary" : "Deletes tag from user's tags group and returns all tags from user's tags group",
+                "produces"  : ["application/json"],
+                "parameters" : [
+                    {
+                        "in" : "path",
+                        "name" : "id",
+                        "description" : "Id of the tag"
+                    },
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "tags" : {
+                                    "type" : "array",
+                                    "items" : {
+                                        "type" : "object",
+                                        "properties" : {
+                                            "id" : {
+                                                "type" : "number"
+                                            },
+                                            "tag_id" : {
+                                                "type" : "number"
+                                            },
+                                            "user_uid" : {
+                                                "type" : "number"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            }
+        },
+        "/user/tag/my" : {
+            "get" : {
+                "tags" : ["tags"],
+                "summary" : "Provides all tags in which the user is the creator",
+                "produces" : ["application/json"],
+                "parameters" : [
+                    {
+                        "in"     : "header",
+                        "name"   : "Authorization",
+                        "type"   : "string",
+                        "schema" : {
+                            "$ref" : "#/definitions/HeaderToken"
+                        }
+                    }
+                ],
+                "responses" : {
+                    "200" : {
+                        "description" : "OK",
+                        "schema" : {
+                            "type" : "object",
+                            "properties" : {
+                                "tags" : {
+                                    "type" : "array",
+                                    "items" : {
+                                        "type" : "object",
+                                        "properties" : {
+                                            "id" : {
+                                                "type" : "number"
+                                            },
+                                            "tag_id" : {
+                                                "type" : "number"
+                                            },
+                                            "user_uid" : {
+                                                "type" : "number"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401" : {
+                        "description" : "User is not authorized"
+                    },
+                    "500" : {
+                        "description" : "Some internal unexpected error on server"
+                    }
+                }
+            }
+        }
+    },
+    "definitions" : {
+        "HeaderToken" : {
+            "properties" : {
+                "token" : {
+                    "type" : "string",
+                    "example" : "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6IjUxZjlmNDEyLTM1NzQtNGFjNS04M2VmLTgxZjNmMmY4YjU1NSIsImlhdCI6MTY2NTQ4NDIzMywiZXhwIjoxNjY1NDg2MDMzfQ.hItTiUZjoBGCx2oK0aLKeWYQuTr1XGrX94_cyZsA-FA"
+                }
+            }
+        }
+    }
+}

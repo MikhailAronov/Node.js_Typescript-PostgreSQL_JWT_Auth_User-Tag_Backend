@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    ports: 
+    - "5000:5000"
+    links:
+    - "database:db"
+    environment:
+       - POSTGRES_USER=fortesttask
+       - POSTGRES_PASSWORD=1111
+       - POSTGRES_DB=fortesttask_test
+       - POSTGRES_HOST=database
+       - POSTGRES_PORT=5432
+    depends_on:
+      - database
+  database:
+    container_name: database
+    image: postgres:14-alpine
+    ports: 
+      - "5500:5432"
+    volumes:
+      - /var/lib/postgresql/data
+    environment:
+       POSTGRES_USER: fortesttask
+       POSTGRES_PASSWORD: 1111
+       POSTGRES_DB: fortesttask_test
+
+
